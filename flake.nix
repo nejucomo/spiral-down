@@ -65,10 +65,12 @@
           ];
 
         # Link-time + SDK dependencies (runtime libs + macOS frameworks).
+        # darwin.apple_sdk / darwin.apple_sdk_11_0 was removed from nixpkgs;
+        # frameworks are now available directly as top-level pkgs attributes.
         buildInputs =
           runtimeLibs
           ++ pkgs.lib.optionals pkgs.stdenv.isDarwin (
-            with pkgs.darwin.apple_sdk.frameworks;
+            with pkgs;
             [
               AppKit
               CoreGraphics
@@ -80,6 +82,11 @@
         commonArgs = {
           inherit src nativeBuildInputs buildInputs;
           strictDeps = true;
+          # Silence crane's "placeholder value" warnings: the root Cargo.toml is
+          # a workspace manifest with no [package] section, so crane can't infer
+          # name/version from it.  Supply them explicitly here instead.
+          pname = "spiral-down";
+          version = "0.1.0";
         };
 
         # Pre-build dependencies once so incremental rebuilds are fast.
