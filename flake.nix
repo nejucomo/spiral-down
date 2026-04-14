@@ -65,12 +65,10 @@
           ];
 
         # Link-time + SDK dependencies (runtime libs + macOS frameworks).
-        # darwin.apple_sdk / darwin.apple_sdk_11_0 was removed from nixpkgs;
-        # frameworks are now available directly as top-level pkgs attributes.
         buildInputs =
           runtimeLibs
           ++ pkgs.lib.optionals pkgs.stdenv.isDarwin (
-            with pkgs;
+            with pkgs.darwin.apple_sdk.frameworks;
             [
               AppKit
               CoreGraphics
