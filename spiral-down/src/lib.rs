@@ -32,14 +32,13 @@ pub fn run() -> Result<()> {
         events.push(Event { label, time });
     }
 
-    let options = eframe::NativeOptions {
-        viewport: egui::ViewportBuilder::default().with_inner_size([600.0, 600.0]),
-        ..Default::default()
-    };
-
     eframe::run_native(
-        "spiral-down",
-        options,
+        env!("CARGO_PKG_NAME"),
+        eframe::NativeOptions {
+            viewport: egui::ViewportBuilder::default().with_maximized(true),
+            persist_window: false,
+            ..Default::default()
+        },
         Box::new(|_cc| Ok(Box::new(SpiralApp::new(events)))),
     )
     .map_err(|e| eyre!("eframe error: {e}"))?;
