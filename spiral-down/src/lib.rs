@@ -84,6 +84,10 @@ impl SpiralApp {
 
 impl eframe::App for SpiralApp {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
+        if !ui.input(|i| i.keys_down.is_empty()) {
+            ui.ctx().send_viewport_cmd(egui::ViewportCommand::Close);
+        }
+
         // Repaint frequently enough for a smooth second-tick countdown.
         ui.ctx()
             .request_repaint_after(std::time::Duration::from_millis(250));
@@ -94,21 +98,23 @@ impl eframe::App for SpiralApp {
 
         let rect = ui.max_rect();
         let center = rect.center();
-        let radius = rect.width().min(rect.height()) * 0.9;
+        let maxradius = rect.width().min(rect.height()) / 2.0 * 0.98;
         let painter = ui.painter();
 
         {
             let pts: Vec<egui::Pos2> = (0..=1000)
                 .map(|i| {
-                    let a = i as f32 / 100.0 * TAU - FRAC_PI_2;
-                    let r = radius.powi(i);
+                    let f = i as f32;
+                    let a = f / 100.0 * TAU - FRAC_PI_2;
+                    let radrat = f / (f + 100.0);
+                    let r = radrat * maxradius;
                     egui::pos2(center.x + r * a.cos(), center.y + r * a.sin())
                 })
                 .collect();
 
             painter.add(egui::Shape::line(
                 pts,
-                egui::Stroke::new(4.0, egui::Color32::from_gray(90)),
+                egui::Stroke::new(1.0, egui::Color32::from_gray(90)),
             ));
         }
     }
