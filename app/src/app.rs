@@ -55,12 +55,12 @@ impl eframe::App for SpiralApp {
             let mut pts = vec![];
             for i in 0..ptcnt {
                 let f = PositiveFinite::new((i as f32) / ptcntf).unwrap();
-                let (pt, _) = spiral.project(f);
+                let pt = spiral.project(f);
                 let pt = ucp.project(pt);
                 pts.push(pt);
             }
 
-            painter.add(Shape::line(pts, Stroke::new(0.2, Color32::from_gray(90))));
+            painter.add(Shape::line(pts, Stroke::new(0.5, Color32::from_gray(90))));
         }
 
         // Paint ticks
