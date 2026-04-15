@@ -1,10 +1,20 @@
-use std::f32::consts::{FRAC_PI_2, TAU};
+// use std::f32::consts::{FRAC_PI_2, TAU};
 
-use eframe::egui::{lerp, Pos2};
-use jiff::{ToSpan as _, Zoned};
+use eframe::egui::{Pos2, Vec2};
+use typed_floats::tf32::PositiveFinite;
 
-const RAD_RAT_DENOM_DELTA: f32 = 0.1;
+// const RAD_RAT_DENOM_DELTA: f32 = 0.1;
 
+#[derive(Debug, Default)]
+pub struct SpiralProjector {}
+
+impl SpiralProjector {
+    pub fn project(&self, f: PositiveFinite) -> (Pos2, Vec2) {
+        todo!("{f:?}")
+    }
+}
+
+/*
 pub trait SpiralProjection: Sized + Copy {
     fn into_spiral_pt_scaled(self, center: Pos2, maxradius: f32) -> Pos2 {
         let Pos2 { x, y } = self.into_spiral_pt();
@@ -49,3 +59,4 @@ fn f32_into_spiral_pt(n: f32) -> Pos2 {
 
     Pos2::new(radius * angle.cos(), radius * angle.sin())
 }
+*/

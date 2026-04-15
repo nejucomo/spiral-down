@@ -1,11 +1,9 @@
 use color_eyre::eyre::{eyre, Result};
 use eframe::egui::{Color32, Shape, Stroke, Ui, ViewportBuilder, ViewportCommand};
-use eframe::epaint::CircleShape;
-use jiff::{ToSpan as _, Zoned};
+use jiff::Zoned;
+use typed_floats::tf32::PositiveFinite;
 
-use crate::{SpiralProjection as _, Ticks};
-
-const DELTA_T_GROWTH_FACTOR: f32 = 1.01;
+use crate::{SpiralProjector, UnitCircleProjector};
 
 pub struct SpiralApp {}
 
@@ -43,32 +41,30 @@ impl eframe::App for SpiralApp {
         ui.ctx()
             .request_repaint_after(std::time::Duration::from_millis(50));
 
-        let rect = ui.max_rect();
-        let center = rect.center();
-        let maxradius = rect.width().min(rect.height()) / 2.0 * 0.98;
+        let spiral = SpiralProjector::default();
+        let ucp = UnitCircleProjector::new(ui.max_rect()).unwrap();
         let painter = ui.painter();
 
-        let now = Zoned::now();
+        // let now = Zoned::now();
 
         // Paint underlying spiral:
         {
-            let stop = now.checked_add(2.day()).unwrap();
+            let ptcnt = 1000;
+            let ptcntf = ptcnt as f32;
 
-            let mut deltasec: f32 = 1.0;
-            let mut t = now.clone();
             let mut pts = vec![];
-
-            while t < stop {
-                pts.push((&now, &t).into_spiral_pt_scaled(center, maxradius));
-
-                t += (deltasec as i64).seconds();
-                deltasec *= DELTA_T_GROWTH_FACTOR;
+            for i in 0..ptcnt {
+                let f = PositiveFinite::new((i as f32) / ptcntf).unwrap();
+                let (pt, _) = spiral.project(f);
+                let pt = ucp.project(pt);
+                pts.push(pt);
             }
 
-            painter.add(Shape::line(pts, Stroke::new(1.0, Color32::from_gray(90))));
+            painter.add(Shape::line(pts, Stroke::new(0.2, Color32::from_gray(90))));
         }
 
         // Paint ticks
+        /*
         {
             let tickradius = maxradius / 100.0;
             for t in Ticks::new(now.clone()) {
@@ -79,5 +75,6 @@ impl eframe::App for SpiralApp {
                 ));
             }
         }
+        */
     }
 }
