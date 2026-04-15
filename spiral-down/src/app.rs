@@ -52,7 +52,7 @@ impl eframe::App for SpiralApp {
 
         // Paint underlying spiral:
         {
-            let stop = now.checked_add(1.year()).unwrap();
+            let stop = now.checked_add(2.day()).unwrap();
 
             let mut deltasec: f32 = 1.0;
             let mut t = now.clone();
