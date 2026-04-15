@@ -41,7 +41,7 @@ impl eframe::App for SpiralApp {
 
         // Repaint frequently enough for a smooth second-tick countdown.
         ui.ctx()
-            .request_repaint_after(std::time::Duration::from_millis(250));
+            .request_repaint_after(std::time::Duration::from_millis(50));
 
         let rect = ui.max_rect();
         let center = rect.center();

@@ -3,7 +3,7 @@ use std::f32::consts::{FRAC_PI_2, TAU};
 use eframe::egui::{lerp, Pos2};
 use jiff::{ToSpan as _, Zoned};
 
-const RAD_RAT_DENOM_DELTA: f32 = 0.01;
+const RAD_RAT_DENOM_DELTA: f32 = 0.1;
 
 pub trait SpiralProjection: Sized + Copy {
     fn into_spiral_pt_scaled(self, center: Pos2, maxradius: f32) -> Pos2 {
