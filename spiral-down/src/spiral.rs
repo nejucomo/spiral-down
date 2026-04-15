@@ -25,7 +25,7 @@ pub trait SpiralProjection: Sized + Copy {
 impl SpiralProjection for (&Zoned, &Zoned) {
     fn into_norm_f32(self) -> f32 {
         let (now, t) = self;
-        let max = seconds_from_now(now, &(now + 1.year()));
+        let max = seconds_from_now(now, &(now + 1.day()));
         let cur = seconds_from_now(now, t);
         cur / max
     }
