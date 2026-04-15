@@ -1,13 +1,12 @@
 use clap::Parser;
 use color_eyre::eyre::{eyre, Result, WrapErr};
-use jiff::Timestamp;
+use jiff::Zoned;
 
-use crate::{Event, SpiralApp};
+use crate::SpiralApp;
 
 #[derive(Parser, Debug)]
 #[command(author, version, about = "Spiral-down event countdown display")]
 struct Args {
-    /// Events
     events: Vec<String>,
 }
 
@@ -27,12 +26,12 @@ pub fn run() -> Result<()> {
         let time = parse_timestamp(timetext)
             .wrap_err_with(|| format!("Failed to parse timestamp {timetext:?}"))?;
 
-        events.push((time, Event::User(label)));
+        events.push((time, label));
     }
 
     SpiralApp::run(events)
 }
 
-fn parse_timestamp(s: &str) -> Result<Timestamp> {
+fn parse_timestamp(s: &str) -> Result<Zoned> {
     todo!("parse {s:?}")
 }

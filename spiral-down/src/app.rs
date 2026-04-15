@@ -1,18 +1,16 @@
 use color_eyre::eyre::{eyre, Result};
 use eframe::egui::{Color32, Shape, Stroke, Ui, ViewportBuilder, ViewportCommand};
 use eframe::epaint::CircleShape;
-use jiff::{Timestamp, ToSpan as _};
+use jiff::{ToSpan as _, Zoned};
 
-use crate::{Event, Schedule, SpiralProjection as _};
+use crate::{SpiralProjection as _, Ticks};
 
 const DELTA_T_GROWTH_FACTOR: f32 = 1.01;
 
-pub struct SpiralApp {
-    sched: Schedule,
-}
+pub struct SpiralApp {}
 
 impl SpiralApp {
-    pub fn run<I: IntoIterator<Item = (Timestamp, Event)>>(events: I) -> Result<()> {
+    pub fn run<I: IntoIterator<Item = (Zoned, String)>>(events: I) -> Result<()> {
         eframe::run_native(
             env!("CARGO_PKG_NAME"),
             eframe::NativeOptions {
@@ -25,9 +23,12 @@ impl SpiralApp {
         .map_err(|e| eyre!("eframe error: {e}"))
     }
 
-    fn new<I: IntoIterator<Item = (Timestamp, Event)>>(events: I) -> Self {
-        Self {
-            sched: Schedule::new(events),
+    fn new<I: IntoIterator<Item = (Zoned, String)>>(events: I) -> Self {
+        let events: Vec<_> = events.into_iter().collect::<Vec<_>>();
+        if events.is_empty() {
+            Self {}
+        } else {
+            todo!("add custom event support: {events:#?}")
         }
     }
 }
@@ -45,21 +46,20 @@ impl eframe::App for SpiralApp {
         let rect = ui.max_rect();
         let center = rect.center();
         let maxradius = rect.width().min(rect.height()) / 2.0 * 0.98;
-        let evradius = maxradius / 100.0;
         let painter = ui.painter();
 
-        let now = Timestamp::now();
+        let now = Zoned::now();
 
         // Paint underlying spiral:
         {
-            let stop = now + 1.year();
+            let stop = now.checked_add(1.year()).unwrap();
 
             let mut deltasec: f32 = 1.0;
-            let mut t = now;
+            let mut t = now.clone();
             let mut pts = vec![];
 
             while t < stop {
-                pts.push(t.into_spiral_pt_scaled(center, maxradius));
+                pts.push((&now, &t).into_spiral_pt_scaled(center, maxradius));
 
                 t += (deltasec as i64).seconds();
                 deltasec *= DELTA_T_GROWTH_FACTOR;
@@ -68,13 +68,13 @@ impl eframe::App for SpiralApp {
             painter.add(Shape::line(pts, Stroke::new(1.0, Color32::from_gray(90))));
         }
 
-        // Paint the events:
+        // Paint ticks
         {
-            self.sched.drop_past_events(now);
-            for (t, _ev) in self.sched.iter() {
+            let tickradius = maxradius / 100.0;
+            for t in Ticks::new(now.clone()) {
                 painter.add(CircleShape::stroke(
-                    t.into_spiral_pt_scaled(center, maxradius),
-                    evradius,
+                    (&now, &t).into_spiral_pt_scaled(center, maxradius),
+                    tickradius,
                     (1.0, Color32::BLUE),
                 ));
             }

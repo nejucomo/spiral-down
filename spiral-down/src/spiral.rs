@@ -1,7 +1,7 @@
 use std::f32::consts::{FRAC_PI_2, TAU};
 
 use eframe::egui::{lerp, Pos2};
-use jiff::{Timestamp, ToSpan as _};
+use jiff::{ToSpan as _, Zoned};
 
 const RAD_RAT_DENOM_DELTA: f32 = 0.1;
 
@@ -21,11 +21,12 @@ pub trait SpiralProjection: Sized + Copy {
     fn into_norm_f32(self) -> f32;
 }
 
-impl SpiralProjection for Timestamp {
+// TODO: fix this ugly API for impl (now, t)
+impl SpiralProjection for (&Zoned, &Zoned) {
     fn into_norm_f32(self) -> f32 {
-        let now = Timestamp::now();
-        let max = seconds_from_now(now, now + 1.year());
-        let cur = seconds_from_now(now, self);
+        let (now, t) = self;
+        let max = seconds_from_now(now, &(now + 1.year()));
+        let cur = seconds_from_now(now, t);
         cur / max
     }
 }
@@ -36,7 +37,7 @@ impl SpiralProjection for f32 {
     }
 }
 
-fn seconds_from_now(now: Timestamp, t: Timestamp) -> f32 {
+fn seconds_from_now(now: &Zoned, t: &Zoned) -> f32 {
     assert!(t >= now, "{:#?}", (now, t));
     (t - now).total(jiff::Unit::Second).unwrap() as f32
 }
