@@ -4,7 +4,7 @@ use eframe::egui::{Pos2, Vec2};
 use typed_floats::tf32::PositiveFinite;
 
 const RAD_RAT_DENOM_DELTA: f32 = 0.1;
-const TICK_NORM_DIVISOR: f32 = 100.0;
+const TICK_NORM_DIVISOR: f32 = 50.0;
 
 #[derive(Debug, Default)]
 pub struct SpiralProjector {}

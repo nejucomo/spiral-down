@@ -5,6 +5,11 @@ use typed_floats::tf32::PositiveFinite;
 
 use crate::{Interval, SpiralProjector, Ticks, TryWidget, UnitCircleProjector};
 
+const SPIRAL_POINT_COUNT: usize = 1000;
+const SPIRAL_POINT_COUNT_F: f32 = SPIRAL_POINT_COUNT as f32;
+const SPINE_COLOR: Color32 = Color32::from_gray(90);
+const TICK_COLOR: Color32 = Color32::from_gray(120);
+
 #[derive(Debug)]
 pub struct SpiralWidget {
     now: Zoned,
@@ -28,18 +33,15 @@ impl TryWidget for SpiralWidget {
         let ucp = UnitCircleProjector::new(ui.max_rect())?;
         let spiral_stroke_width = 0.5;
 
-        let ptcnt = 1000;
-        let ptcntf = ptcnt as f32;
-
         let mut pts = vec![];
-        for i in 0..ptcnt {
-            let f = PositiveFinite::new((i as f32) / ptcntf)?;
+        for i in 0..SPIRAL_POINT_COUNT {
+            let f = PositiveFinite::new((i as f32) / SPIRAL_POINT_COUNT_F)?;
             let pt = self.sproj.project(f);
             let pt = ucp.project(pt);
             pts.push(pt);
         }
 
-        painter.line(pts, (spiral_stroke_width, Color32::from_gray(90)));
+        painter.line(pts, (spiral_stroke_width, SPINE_COLOR));
 
         let maxspan = 24.hours();
         let interval = Interval::new(self.now.clone(), maxspan)?;
@@ -49,11 +51,10 @@ impl TryWidget for SpiralWidget {
             let (pt, norm) = self.sproj.project_with_norm(f);
             let a = pt + norm;
             let b = pt - norm;
-            dbg!(pt, norm, a, b);
             let a = ucp.project(a);
             let b = ucp.project(b);
 
-            painter.line_segment([a, b], (spiral_stroke_width, Color32::BLUE));
+            painter.line_segment([a, b], (spiral_stroke_width, TICK_COLOR));
         }
 
         Ok(ui.interact(rect, ui.id(), Sense::hover()))
