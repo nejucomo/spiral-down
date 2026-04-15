@@ -8,7 +8,7 @@ name = "spiral-down"
 path = "src/bin/spiral-down.rs"
 
 [dependencies]
-chrono = "0.4.44"
 clap = { version = "4.6.0", features = ["derive"] }
 color-eyre = "0.6.5"
 eframe = "0.34.1"
+jiff = "0.2.23"
