@@ -1,14 +1,13 @@
-use color_eyre::eyre::{eyre, Result};
-use eframe::egui::{Color32, Shape, Stroke, Ui, ViewportBuilder, ViewportCommand};
+use color_eyre::eyre::{self, eyre};
+use eframe::egui::{Ui, ViewportBuilder, ViewportCommand};
 use jiff::Zoned;
-use typed_floats::tf32::PositiveFinite;
 
-use crate::{SpiralProjector, UnitCircleProjector};
+use crate::{SpiralWidget, TryWidget as _};
 
 pub struct SpiralApp {}
 
 impl SpiralApp {
-    pub fn run<I: IntoIterator<Item = (Zoned, String)>>(events: I) -> Result<()> {
+    pub fn run<I: IntoIterator<Item = (Zoned, String)>>(events: I) -> eyre::Result<()> {
         eframe::run_native(
             env!("CARGO_PKG_NAME"),
             eframe::NativeOptions {
@@ -41,40 +40,6 @@ impl eframe::App for SpiralApp {
         ui.ctx()
             .request_repaint_after(std::time::Duration::from_millis(50));
 
-        let spiral = SpiralProjector::default();
-        let ucp = UnitCircleProjector::new(ui.max_rect()).unwrap();
-        let painter = ui.painter();
-
-        // let now = Zoned::now();
-
-        // Paint underlying spiral:
-        {
-            let ptcnt = 1000;
-            let ptcntf = ptcnt as f32;
-
-            let mut pts = vec![];
-            for i in 0..ptcnt {
-                let f = PositiveFinite::new((i as f32) / ptcntf).unwrap();
-                let pt = spiral.project(f);
-                let pt = ucp.project(pt);
-                pts.push(pt);
-            }
-
-            painter.add(Shape::line(pts, Stroke::new(0.5, Color32::from_gray(90))));
-        }
-
-        // Paint ticks
-        /*
-        {
-            let tickradius = maxradius / 100.0;
-            for t in Ticks::new(now.clone()) {
-                painter.add(CircleShape::stroke(
-                    (&now, &t).into_spiral_pt_scaled(center, maxradius),
-                    tickradius,
-                    (1.0, Color32::BLUE),
-                ));
-            }
-        }
-        */
+        ui.add(SpiralWidget::default().into_unwrap_widget());
     }
 }
