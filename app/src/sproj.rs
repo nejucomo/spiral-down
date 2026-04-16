@@ -3,7 +3,7 @@ use std::f32::consts::{FRAC_PI_2, TAU};
 use eframe::egui::{Pos2, Vec2};
 use typed_floats::tf32::PositiveFinite;
 
-const RAD_RAT_DENOM_DELTA: f32 = 0.1;
+const RAD_RAT_DENOM_DELTA: f32 = 0.01;
 const TICK_NORM_DIVISOR: f32 = 50.0;
 
 #[derive(Debug, Default)]

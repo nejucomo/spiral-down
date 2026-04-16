@@ -18,6 +18,7 @@ pub struct Tick {
 #[derive(Copy, Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 enum TickInterval {
     Second,
+    QuarterMinute,
     Minute,
     QuarterHour,
     Hour,
@@ -31,8 +32,9 @@ enum TickInterval {
     // Year,
 }
 
-const TICK_INTERVALS: [TickInterval; 8] = [
+const TICK_INTERVALS: [TickInterval; 9] = [
     Second,
+    QuarterMinute,
     Minute,
     QuarterHour,
     Hour,
@@ -122,6 +124,7 @@ impl TickInterval {
         let zrbase = ZonedRound::new().mode(RoundMode::Ceil);
         match self {
             Second => zrbase.smallest(Unit::Second),
+            QuarterMinute => zrbase.smallest(Unit::Second).increment(15),
             Minute => zrbase.smallest(Unit::Minute),
             QuarterHour => zrbase.smallest(Unit::Minute).increment(15),
             Hour => zrbase.smallest(Unit::Hour),
@@ -139,6 +142,7 @@ impl TickInterval {
     fn span(self) -> Span {
         match self {
             Second => 1.second(),
+            QuarterMinute => 15.seconds(),
             Minute => 1.minute(),
             QuarterHour => 15.minute(),
             Hour => 1.hour(),
@@ -156,7 +160,8 @@ impl TickInterval {
     // How many ticks on the spiral for this interval?
     fn count(self) -> usize {
         match self {
-            Second => 120,
+            Second => 30,
+            QuarterMinute => 8,
             Minute => 120,
             QuarterHour => 8,
             Hour => 24,

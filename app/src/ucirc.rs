@@ -3,7 +3,7 @@ use eframe::egui::{Pos2, Rect};
 use typed_floats::tf32::{PositiveFinite, StrictlyPositiveFinite};
 
 const RADIUS_DIVISOR: StrictlyPositiveFinite =
-    unsafe { StrictlyPositiveFinite::new_unchecked(2.0 * 0.98) };
+    unsafe { StrictlyPositiveFinite::new_unchecked(2.0 * 1.05) };
 
 #[derive(Debug)]
 pub struct UnitCircleProjector {
