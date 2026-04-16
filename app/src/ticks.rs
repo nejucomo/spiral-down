@@ -1,7 +1,21 @@
+use std::collections::BinaryHeap;
+
+use color_eyre::eyre;
 use jiff::{RoundMode, Span, ToSpan as _, Unit, Zoned, ZonedRound};
 use TickInterval::*;
 
-#[derive(Copy, Clone, Debug)]
+pub struct Ticks {
+    heap: BinaryHeap<Tick>,
+}
+
+#[derive(Debug, Eq, PartialEq)]
+pub struct Tick {
+    t: Zoned,
+    prior: usize,
+    ti: TickInterval,
+}
+
+#[derive(Copy, Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 enum TickInterval {
     Second,
     Minute,
@@ -32,41 +46,74 @@ const TICK_INTERVALS: [TickInterval; 8] = [
     // Year,
 ];
 
-pub struct Ticks {
-    idx: usize,
-    zoneds: [Zoned; 8],
-}
-
 impl Ticks {
-    pub fn new(now: Zoned) -> Self {
-        Self {
-            idx: 0,
-            zoneds: TICK_INTERVALS.map(|ti| now.round(ti.zoned_round()).unwrap()),
-        }
+    pub fn new(now: Zoned) -> eyre::Result<Self> {
+        Ok(Self {
+            heap: TICK_INTERVALS
+                .into_iter()
+                .map(|ti| Tick::new(&now, ti).unwrap())
+                .collect(),
+        })
+    }
+
+    fn next_res(&mut self) -> eyre::Result<Option<Tick>> {
+        self.heap
+            .pop()
+            .map(|tick| {
+                if let Some(next) = tick.next()? {
+                    self.heap.push(next);
+                }
+                Ok(tick)
+            })
+            .transpose()
     }
 }
 
 impl Iterator for Ticks {
-    type Item = Zoned;
+    type Item = Tick;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let zlen = self.zoneds.len();
-        if self.idx < zlen {
-            let t = self.zoneds[self.idx].clone();
+        self.next_res().unwrap()
+    }
+}
 
-            if self.idx + 1 == zlen || t >= self.zoneds[self.idx + 1] {
-                self.idx = zlen.min(self.idx + 1);
-            }
+impl Tick {
+    pub fn time(&self) -> &Zoned {
+        &self.t
+    }
 
-            if self.idx < zlen {
-                let nextt = &mut self.zoneds[self.idx];
-                *nextt = nextt.checked_add(TICK_INTERVALS[self.idx].span()).unwrap();
-            }
+    pub fn prior(&self) -> usize {
+        self.prior
+    }
 
-            Some(t)
+    fn new(now: &Zoned, ti: TickInterval) -> eyre::Result<Self> {
+        let t = now.round(ti.zoned_round())?;
+        Ok(Self { t, prior: 0, ti })
+    }
+
+    fn next(&self) -> eyre::Result<Option<Self>> {
+        let ti = self.ti;
+        let prior = self.prior + 1;
+        if prior < ti.count() {
+            let t = self.t.checked_add(self.ti.span())?;
+            Ok(Some(Self { t, prior, ti }))
         } else {
-            None
+            Ok(None)
         }
+    }
+}
+
+impl Ord for Tick {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        (&self.t, self.prior)
+            .cmp(&(&other.t, other.prior))
+            .reverse()
+    }
+}
+
+impl PartialOrd for Tick {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        Some(self.cmp(other))
     }
 }
 
@@ -103,6 +150,20 @@ impl TickInterval {
             // Week => 1.week(),
             // Month => 1.month(),
             // Year => 1.year(),
+        }
+    }
+
+    // How many ticks on the spiral for this interval?
+    fn count(self) -> usize {
+        match self {
+            Second => 120,
+            Minute => 120,
+            QuarterHour => 8,
+            Hour => 24,
+            EighthDay => 8,
+            QuarterDay => 4,
+            HalfDay => 2,
+            Day => 1,
         }
     }
 }

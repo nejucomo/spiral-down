@@ -10,6 +10,7 @@ const SPIRAL_POINT_COUNT: usize = 1000;
 const SPIRAL_POINT_COUNT_F: f32 = SPIRAL_POINT_COUNT as f32;
 const SPINE_COLOR: Color32 = Color32::from_gray(90);
 const TICK_COLOR: Color32 = Color32::from_gray(120);
+const TICK_ATTENUATION_FACTOR: f32 = 0.9;
 
 #[derive(Debug)]
 pub struct SpiralWidget {
@@ -44,12 +45,12 @@ impl TryWidget for SpiralWidget {
 
         painter.line(pts, (spiral_stroke_width, SPINE_COLOR));
 
-        let maxspan = 24.hours();
-        let interval = Interval::new(self.now.clone(), maxspan)?;
-        for t in Ticks::new(self.now) {
-            let f = interval.progress(&t)?;
+        let interval = Interval::new(self.now.clone(), 24.hours())?;
+        for tick in Ticks::new(self.now)? {
+            let f = interval.progress(tick.time())?;
             let f = PositiveFinite::new(f.get().powf(TIME_WARP_POWER))?;
             let (pt, norm) = self.sproj.project_with_norm(f);
+            let norm = norm * TICK_ATTENUATION_FACTOR.powi(tick.prior().try_into().unwrap());
             let a = pt + norm;
             let b = pt - norm;
             let a = ucp.project(a);
