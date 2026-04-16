@@ -12,6 +12,6 @@ pub use self::interval::Interval;
 pub use self::run::run;
 pub use self::spiral::SpiralWidget;
 pub use self::sproj::SpiralProjector;
-pub use self::ticks::{Tick, Ticks};
+pub use self::ticks::{Tick, TickInterval, Ticks};
 pub use self::trywidget::TryWidget;
 pub use self::ucirc::UnitCircleProjector;

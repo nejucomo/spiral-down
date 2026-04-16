@@ -13,12 +13,13 @@ pub struct Tick {
     t: Zoned,
     prior: usize,
     ti: TickInterval,
+    label: Option<String>,
 }
 
 #[derive(Copy, Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
-enum TickInterval {
+pub enum TickInterval {
     Second,
-    QuarterMinute,
+    HalfMinute,
     Minute,
     QuarterHour,
     Hour,
@@ -34,7 +35,7 @@ enum TickInterval {
 
 const TICK_INTERVALS: [TickInterval; 9] = [
     Second,
-    QuarterMinute,
+    HalfMinute,
     Minute,
     QuarterHour,
     Hour,
@@ -59,15 +60,34 @@ impl Ticks {
     }
 
     fn next_res(&mut self) -> eyre::Result<Option<Tick>> {
-        self.heap
-            .pop()
-            .map(|tick| {
-                if let Some(next) = tick.next()? {
-                    self.heap.push(next);
+        self.pop_and_reinsert()?
+            .map(|mut tick| {
+                // Deduplicate ticks at the same time:
+                while self.peek_time() == Some(&tick.t) {
+                    let nexttick = self.pop_and_reinsert()?.unwrap();
+                    if nexttick.ti > tick.ti {
+                        tick = nexttick;
+                    }
                 }
                 Ok(tick)
             })
             .transpose()
+    }
+
+    fn pop_and_reinsert(&mut self) -> eyre::Result<Option<Tick>> {
+        if let Some(tick) = self.heap.pop() {
+            if let Some(next) = tick.next()? {
+                self.heap.push(next);
+            }
+            Ok(Some(tick))
+        } else {
+            Ok(None)
+        }
+    }
+
+    // Used for deduplicating same-timed ticks:
+    fn peek_time(&self) -> Option<&Zoned> {
+        self.heap.peek().map(|tick| &tick.t)
     }
 }
 
@@ -88,9 +108,25 @@ impl Tick {
         self.prior
     }
 
+    pub fn interval(&self) -> TickInterval {
+        self.ti
+    }
+
+    pub fn label(&self) -> Option<&str> {
+        self.label.as_deref()
+    }
+
     fn new(now: &Zoned, ti: TickInterval) -> eyre::Result<Self> {
         let t = now.round(ti.zoned_round())?;
-        Ok(Self { t, prior: 0, ti })
+        let prior = 0;
+        let label = Some(ti.label_for(&t, prior));
+
+        Ok(Self {
+            t,
+            prior,
+            ti,
+            label,
+        })
     }
 
     fn next(&self) -> eyre::Result<Option<Self>> {
@@ -98,7 +134,18 @@ impl Tick {
         let prior = self.prior + 1;
         if prior < ti.count() {
             let t = self.t.checked_add(self.ti.span())?;
-            Ok(Some(Self { t, prior, ti }))
+            let label = if prior < ti.label_count() {
+                Some(ti.label_for(&t, prior))
+            } else {
+                None
+            };
+
+            Ok(Some(Self {
+                t,
+                prior,
+                ti,
+                label,
+            }))
         } else {
             Ok(None)
         }
@@ -124,7 +171,7 @@ impl TickInterval {
         let zrbase = ZonedRound::new().mode(RoundMode::Ceil);
         match self {
             Second => zrbase.smallest(Unit::Second),
-            QuarterMinute => zrbase.smallest(Unit::Second).increment(15),
+            HalfMinute => zrbase.smallest(Unit::Second).increment(30),
             Minute => zrbase.smallest(Unit::Minute),
             QuarterHour => zrbase.smallest(Unit::Minute).increment(15),
             Hour => zrbase.smallest(Unit::Hour),
@@ -142,7 +189,7 @@ impl TickInterval {
     fn span(self) -> Span {
         match self {
             Second => 1.second(),
-            QuarterMinute => 15.seconds(),
+            HalfMinute => 30.seconds(),
             Minute => 1.minute(),
             QuarterHour => 15.minute(),
             Hour => 1.hour(),
@@ -160,8 +207,8 @@ impl TickInterval {
     // How many ticks on the spiral for this interval?
     fn count(self) -> usize {
         match self {
-            Second => 30,
-            QuarterMinute => 8,
+            Second => 10,
+            HalfMinute => 4,
             Minute => 120,
             QuarterHour => 8,
             Hour => 24,
@@ -169,6 +216,30 @@ impl TickInterval {
             QuarterDay => 4,
             HalfDay => 2,
             Day => 30,
+        }
+    }
+
+    fn label_for(self, t: &Zoned, _prior: usize) -> String {
+        match self {
+            Second => t.strftime(":%S").to_string(),
+            HalfMinute => t.time().to_string(),
+            Minute | QuarterHour => t.strftime("%H:%M").to_string(),
+            Hour | EighthDay | QuarterDay | HalfDay => t.strftime("%H").to_string(),
+            Day => t.date().to_string(),
+        }
+    }
+
+    fn label_count(self) -> usize {
+        match self {
+            Second => 30,
+            HalfMinute => 3,
+            Minute => 10,
+            QuarterHour => 3,
+            Hour => 2,
+            EighthDay => 1,
+            QuarterDay => 1,
+            HalfDay => 1,
+            Day => 31, // should be one month
         }
     }
 }
