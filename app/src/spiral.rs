@@ -61,6 +61,13 @@ impl TryWidget for SpiralWidget {
             );
         }
 
+        let now_sec = {
+            use jiff::{RoundMode::Floor, Unit::Second, ZonedRound};
+
+            self.now
+                .round(ZonedRound::new().smallest(Second).mode(Floor))?
+        };
+
         let interval = Interval::new(
             self.now.clone(),
             (SPIRAL_ROTATIONS * SPIRAL_HOURS_PER_ROTATION).hours(),
@@ -78,22 +85,22 @@ impl TryWidget for SpiralWidget {
             painter.line_segment([a, b], (spiral_stroke_width, TICK_COLOR));
 
             if let Some(label) = tick.label() {
-                use crate::TickInterval::Second;
-
-                let (normpt, align) = if matches!(tick.interval(), Second) && tick.prior() == 0 {
-                    (Pos2::ZERO, Align2::CENTER_TOP)
-                } else {
-                    (pt, Align2::RIGHT_BOTTOM)
-                };
-
                 painter.text(
-                    ucp.project(normpt),
-                    align,
+                    ucp.project(pt),
+                    Align2::RIGHT_BOTTOM,
                     label,
                     TICK_LABEL_FONT,
                     TICK_LABEL_COLOR,
                 );
             }
+
+            painter.text(
+                ucp.project(Pos2::ZERO),
+                Align2::CENTER_TOP,
+                now_sec.time(),
+                TICK_LABEL_FONT,
+                TICK_LABEL_COLOR,
+            );
         }
 
         Ok(ui.interact(rect, ui.id(), Sense::hover()))

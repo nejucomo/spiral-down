@@ -207,7 +207,7 @@ impl TickInterval {
     // How many ticks on the spiral for this interval?
     fn count(self) -> usize {
         match self {
-            Second => 30,
+            Second => 10,
             HalfMinute => 4,
             Minute => 120,
             QuarterHour => 8,
@@ -219,10 +219,10 @@ impl TickInterval {
         }
     }
 
-    fn label_for(self, t: &Zoned, prior: usize) -> String {
+    fn label_for(self, t: &Zoned, _prior: usize) -> String {
         match self {
-            Second if prior > 0 => t.strftime(":%S").to_string(),
-            Second | HalfMinute => t.time().to_string(),
+            Second => t.strftime(":%S").to_string(),
+            HalfMinute => t.time().to_string(),
             Minute | QuarterHour => t.strftime("%H:%M").to_string(),
             Hour | EighthDay | QuarterDay | HalfDay => t.strftime("%H").to_string(),
             Day => t.date().to_string(),
