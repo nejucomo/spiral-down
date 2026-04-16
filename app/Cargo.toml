@@ -10,5 +10,7 @@ path = "src/bin/spiral-down.rs"
 [dependencies]
 clap = { version = "4.6.0", features = ["derive"] }
 color-eyre = "0.6.5"
+derive-new = "0.7.0"
 eframe = "0.34.1"
 jiff = "0.2.23"
+typed_floats = "1.0.7"
