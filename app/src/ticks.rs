@@ -219,17 +219,19 @@ impl TickInterval {
         }
     }
 
-    fn label_for(self, t: &Zoned, _prior: usize) -> String {
+    fn label_for(self, t: &Zoned, prior: usize) -> String {
         match self {
+            Second if prior > 0 => t.strftime(":%S").to_string(),
+            Second | HalfMinute => t.time().to_string(),
+            Minute | QuarterHour => t.strftime("%H:%M").to_string(),
+            Hour | EighthDay | QuarterDay | HalfDay => t.strftime("%H").to_string(),
             Day => t.date().to_string(),
-            Minute => t.strftime("%H:%M").to_string(),
-            _ => t.time().to_string(),
         }
     }
 
     fn label_count(self) -> usize {
         match self {
-            Second => 1,
+            Second => 30,
             HalfMinute => 3,
             Minute => 10,
             QuarterHour => 3,
