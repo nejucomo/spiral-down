@@ -80,7 +80,7 @@ impl TryWidget for SpiralWidget {
             if let Some(label) = tick.label() {
                 use crate::TickInterval::Second;
 
-                let (normpt, align) = if matches!(tick.interval(), Second) {
+                let (normpt, align) = if matches!(tick.interval(), Second) && tick.prior() == 0 {
                     (Pos2::ZERO, Align2::CENTER_TOP)
                 } else {
                     (pt, Align2::RIGHT_BOTTOM)

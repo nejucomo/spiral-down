@@ -99,11 +99,12 @@ impl Tick {
 
     fn new(now: &Zoned, ti: TickInterval) -> eyre::Result<Self> {
         let t = now.round(ti.zoned_round())?;
-        let label = Some(ti.label_for(&t));
+        let prior = 0;
+        let label = Some(ti.label_for(&t, prior));
 
         Ok(Self {
             t,
-            prior: 0,
+            prior,
             ti,
             label,
         })
@@ -115,7 +116,7 @@ impl Tick {
         if prior < ti.count() {
             let t = self.t.checked_add(self.ti.span())?;
             let label = if prior < ti.label_count() {
-                Some(ti.label_for(&t))
+                Some(ti.label_for(&t, prior))
             } else {
                 None
             };
@@ -199,9 +200,10 @@ impl TickInterval {
         }
     }
 
-    fn label_for(self, t: &Zoned) -> String {
+    fn label_for(self, t: &Zoned, _prior: usize) -> String {
         match self {
             Day => t.date().to_string(),
+            Minute => t.strftime("%H:%M").to_string(),
             _ => t.time().to_string(),
         }
     }
