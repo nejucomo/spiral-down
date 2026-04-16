@@ -13,6 +13,7 @@ pub struct Tick {
     t: Zoned,
     prior: usize,
     ti: TickInterval,
+    label: Option<String>,
 }
 
 #[derive(Copy, Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
@@ -88,9 +89,19 @@ impl Tick {
         self.prior
     }
 
+    pub fn label(&self) -> Option<&str> {
+        self.label.as_deref()
+    }
+
     fn new(now: &Zoned, ti: TickInterval) -> eyre::Result<Self> {
         let t = now.round(ti.zoned_round())?;
-        Ok(Self { t, prior: 0, ti })
+        let label = Some(ti.label_for(&t));
+        Ok(Self {
+            t,
+            prior: 0,
+            ti,
+            label,
+        })
     }
 
     fn next(&self) -> eyre::Result<Option<Self>> {
@@ -98,7 +109,12 @@ impl Tick {
         let prior = self.prior + 1;
         if prior < ti.count() {
             let t = self.t.checked_add(self.ti.span())?;
-            Ok(Some(Self { t, prior, ti }))
+            Ok(Some(Self {
+                t,
+                prior,
+                ti,
+                label: None,
+            }))
         } else {
             Ok(None)
         }
@@ -169,6 +185,13 @@ impl TickInterval {
             QuarterDay => 4,
             HalfDay => 2,
             Day => 30,
+        }
+    }
+
+    fn label_for(self, t: &Zoned) -> String {
+        match self {
+            Day => t.date().to_string(),
+            _ => t.time().to_string(),
         }
     }
 }

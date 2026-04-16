@@ -1,20 +1,22 @@
 use color_eyre::eyre;
-use eframe::egui::{Color32, Response, Sense, Ui};
+use eframe::egui::{Align2, Color32, FontId, Response, Sense, Ui};
 use jiff::{ToSpan as _, Zoned};
 use typed_floats::tf32::PositiveFinite;
 
 use crate::{Interval, SpiralProjector, Ticks, TryWidget, UnitCircleProjector};
 
-const SPIRAL_HOURS_PER_ROTATION: i32 = 24;
-const SPIRAL_ROTATIONS: i32 = 30;
-const TIME_WARP_POWER: f32 = 0.5;
-const SPIRAL_POINTS_PER_LEVEL: usize = 800;
-const SPIRAL_POINT_LEVELS: usize = 16;
-const SPIRAL_POINTS_TOTAL_F: f32 = (SPIRAL_POINTS_PER_LEVEL * SPIRAL_POINT_LEVELS) as f32;
-const SPIRAL_LEVEL_GAMMA_FACTOR: f32 = 0.6;
 const SPINE_COLOR: Color32 = Color32::from_gray(90);
-const TICK_COLOR: Color32 = Color32::from_gray(120);
+const SPIRAL_HOURS_PER_ROTATION: i32 = 24;
+const SPIRAL_LEVEL_GAMMA_FACTOR: f32 = 0.6;
+const SPIRAL_POINTS_PER_LEVEL: usize = 800;
+const SPIRAL_POINTS_TOTAL_F: f32 = (SPIRAL_POINTS_PER_LEVEL * SPIRAL_POINT_LEVELS) as f32;
+const SPIRAL_POINT_LEVELS: usize = 16;
+const SPIRAL_ROTATIONS: i32 = 30;
 const TICK_ATTENUATION_FACTOR: f32 = 0.9;
+const TICK_COLOR: Color32 = Color32::from_gray(120);
+const TICK_LABEL_COLOR: Color32 = Color32::from_gray(180);
+const TICK_LABEL_FONT: FontId = FontId::proportional(10.0);
+const TIME_WARP_POWER: f32 = 0.5;
 
 #[derive(Debug)]
 pub struct SpiralWidget {
@@ -74,6 +76,16 @@ impl TryWidget for SpiralWidget {
             let b = ucp.project(b);
 
             painter.line_segment([a, b], (spiral_stroke_width, TICK_COLOR));
+
+            if let Some(label) = tick.label() {
+                painter.text(
+                    ucp.project(pt),
+                    Align2::RIGHT_BOTTOM,
+                    label,
+                    TICK_LABEL_FONT,
+                    TICK_LABEL_COLOR,
+                );
+            }
         }
 
         Ok(ui.interact(rect, ui.id(), Sense::hover()))
