@@ -1,13 +1,16 @@
 use std::f32::consts::{FRAC_PI_2, TAU};
 
+use derive_new::new;
 use eframe::egui::{Pos2, Vec2};
 use typed_floats::tf32::PositiveFinite;
 
 const RAD_RAT_DENOM_DELTA: f32 = 0.01;
 const TICK_NORM_DIVISOR: f32 = 50.0;
 
-#[derive(Debug, Default)]
-pub struct SpiralProjector {}
+#[derive(Debug, Default, new)]
+pub struct SpiralProjector {
+    rotations: f32,
+}
 
 impl SpiralProjector {
     pub fn project(&self, f: PositiveFinite) -> Pos2 {
@@ -27,7 +30,7 @@ impl SpiralProjector {
     }
 
     fn project_prim(&self, f: f32) -> Pos2 {
-        let angle = f * TAU - FRAC_PI_2;
+        let angle = (f * TAU * self.rotations) - FRAC_PI_2;
         let radius = f / (f + RAD_RAT_DENOM_DELTA);
 
         Pos2::new(radius * angle.cos(), radius * angle.sin())

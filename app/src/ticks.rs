@@ -168,7 +168,7 @@ impl TickInterval {
             EighthDay => 8,
             QuarterDay => 4,
             HalfDay => 2,
-            Day => 1,
+            Day => 30,
         }
     }
 }

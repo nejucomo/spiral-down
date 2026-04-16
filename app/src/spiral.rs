@@ -5,8 +5,10 @@ use typed_floats::tf32::PositiveFinite;
 
 use crate::{Interval, SpiralProjector, Ticks, TryWidget, UnitCircleProjector};
 
+const SPIRAL_HOURS_PER_ROTATION: i32 = 24;
+const SPIRAL_ROTATIONS: i32 = 30;
 const TIME_WARP_POWER: f32 = 0.5;
-const SPIRAL_POINT_COUNT: usize = 1000;
+const SPIRAL_POINT_COUNT: usize = 10000;
 const SPIRAL_POINT_COUNT_F: f32 = SPIRAL_POINT_COUNT as f32;
 const SPINE_COLOR: Color32 = Color32::from_gray(90);
 const TICK_COLOR: Color32 = Color32::from_gray(120);
@@ -22,7 +24,7 @@ impl Default for SpiralWidget {
     fn default() -> Self {
         Self {
             now: Zoned::now(),
-            sproj: SpiralProjector::default(),
+            sproj: SpiralProjector::new(SPIRAL_ROTATIONS as f32),
         }
     }
 }
@@ -45,7 +47,10 @@ impl TryWidget for SpiralWidget {
 
         painter.line(pts, (spiral_stroke_width, SPINE_COLOR));
 
-        let interval = Interval::new(self.now.clone(), 24.hours())?;
+        let interval = Interval::new(
+            self.now.clone(),
+            (SPIRAL_ROTATIONS * SPIRAL_HOURS_PER_ROTATION).hours(),
+        )?;
         for tick in Ticks::new(self.now)? {
             let f = interval.progress(tick.time())?;
             let f = PositiveFinite::new(f.get().powf(TIME_WARP_POWER))?;
