@@ -17,7 +17,7 @@ pub struct Tick {
 }
 
 #[derive(Copy, Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
-enum TickInterval {
+pub enum TickInterval {
     Second,
     QuarterMinute,
     Minute,
@@ -89,6 +89,10 @@ impl Tick {
         self.prior
     }
 
+    pub fn interval(&self) -> TickInterval {
+        self.ti
+    }
+
     pub fn label(&self) -> Option<&str> {
         self.label.as_deref()
     }
@@ -96,6 +100,7 @@ impl Tick {
     fn new(now: &Zoned, ti: TickInterval) -> eyre::Result<Self> {
         let t = now.round(ti.zoned_round())?;
         let label = Some(ti.label_for(&t));
+
         Ok(Self {
             t,
             prior: 0,

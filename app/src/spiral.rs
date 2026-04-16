@@ -1,5 +1,5 @@
 use color_eyre::eyre;
-use eframe::egui::{Align2, Color32, FontId, Response, Sense, Ui};
+use eframe::egui::{Align2, Color32, FontId, Pos2, Response, Sense, Ui};
 use jiff::{ToSpan as _, Zoned};
 use typed_floats::tf32::PositiveFinite;
 
@@ -78,9 +78,17 @@ impl TryWidget for SpiralWidget {
             painter.line_segment([a, b], (spiral_stroke_width, TICK_COLOR));
 
             if let Some(label) = tick.label() {
+                use crate::TickInterval::Second;
+
+                let (normpt, align) = if matches!(tick.interval(), Second) {
+                    (Pos2::ZERO, Align2::CENTER_TOP)
+                } else {
+                    (pt, Align2::RIGHT_BOTTOM)
+                };
+
                 painter.text(
-                    ucp.project(pt),
-                    Align2::RIGHT_BOTTOM,
+                    ucp.project(normpt),
+                    align,
                     label,
                     TICK_LABEL_FONT,
                     TICK_LABEL_COLOR,
