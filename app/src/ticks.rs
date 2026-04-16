@@ -19,7 +19,7 @@ pub struct Tick {
 #[derive(Copy, Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub enum TickInterval {
     Second,
-    QuarterMinute,
+    HalfMinute,
     Minute,
     QuarterHour,
     Hour,
@@ -35,7 +35,7 @@ pub enum TickInterval {
 
 const TICK_INTERVALS: [TickInterval; 9] = [
     Second,
-    QuarterMinute,
+    HalfMinute,
     Minute,
     QuarterHour,
     Hour,
@@ -114,11 +114,17 @@ impl Tick {
         let prior = self.prior + 1;
         if prior < ti.count() {
             let t = self.t.checked_add(self.ti.span())?;
+            let label = if prior < ti.label_count() {
+                Some(ti.label_for(&t))
+            } else {
+                None
+            };
+
             Ok(Some(Self {
                 t,
                 prior,
                 ti,
-                label: None,
+                label,
             }))
         } else {
             Ok(None)
@@ -145,7 +151,7 @@ impl TickInterval {
         let zrbase = ZonedRound::new().mode(RoundMode::Ceil);
         match self {
             Second => zrbase.smallest(Unit::Second),
-            QuarterMinute => zrbase.smallest(Unit::Second).increment(15),
+            HalfMinute => zrbase.smallest(Unit::Second).increment(30),
             Minute => zrbase.smallest(Unit::Minute),
             QuarterHour => zrbase.smallest(Unit::Minute).increment(15),
             Hour => zrbase.smallest(Unit::Hour),
@@ -163,7 +169,7 @@ impl TickInterval {
     fn span(self) -> Span {
         match self {
             Second => 1.second(),
-            QuarterMinute => 15.seconds(),
+            HalfMinute => 30.seconds(),
             Minute => 1.minute(),
             QuarterHour => 15.minute(),
             Hour => 1.hour(),
@@ -182,7 +188,7 @@ impl TickInterval {
     fn count(self) -> usize {
         match self {
             Second => 30,
-            QuarterMinute => 8,
+            HalfMinute => 4,
             Minute => 120,
             QuarterHour => 8,
             Hour => 24,
@@ -197,6 +203,20 @@ impl TickInterval {
         match self {
             Day => t.date().to_string(),
             _ => t.time().to_string(),
+        }
+    }
+
+    fn label_count(self) -> usize {
+        match self {
+            Second => 1,
+            HalfMinute => 3,
+            Minute => 10,
+            QuarterHour => 3,
+            Hour => 2,
+            EighthDay => 1,
+            QuarterDay => 1,
+            HalfDay => 1,
+            Day => 31, // should be one month
         }
     }
 }
