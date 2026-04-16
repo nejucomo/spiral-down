@@ -60,15 +60,34 @@ impl Ticks {
     }
 
     fn next_res(&mut self) -> eyre::Result<Option<Tick>> {
-        self.heap
-            .pop()
-            .map(|tick| {
-                if let Some(next) = tick.next()? {
-                    self.heap.push(next);
+        self.pop_and_reinsert()?
+            .map(|mut tick| {
+                // Deduplicate ticks at the same time:
+                while self.peek_time() == Some(&tick.t) {
+                    let nexttick = self.pop_and_reinsert()?.unwrap();
+                    if nexttick.ti > tick.ti {
+                        tick = nexttick;
+                    }
                 }
                 Ok(tick)
             })
             .transpose()
+    }
+
+    fn pop_and_reinsert(&mut self) -> eyre::Result<Option<Tick>> {
+        if let Some(tick) = self.heap.pop() {
+            if let Some(next) = tick.next()? {
+                self.heap.push(next);
+            }
+            Ok(Some(tick))
+        } else {
+            Ok(None)
+        }
+    }
+
+    // Used for deduplicating same-timed ticks:
+    fn peek_time(&self) -> Option<&Zoned> {
+        self.heap.peek().map(|tick| &tick.t)
     }
 }
 
